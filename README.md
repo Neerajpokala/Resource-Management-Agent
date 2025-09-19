@@ -158,7 +158,7 @@ graph TD
     O --> AD[Execute get_employee_location function];
     P --> AE[Execute get_employee_details function];
     Q --> AF[Execute allocate_project function];
-    R --> AG[Show "Please rephrase" message];
+    R --> AG[Show 'Please rephrase' message];
 
     S --> AH((Display Results));
     T --> AH;
