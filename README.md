@@ -128,53 +128,8 @@ The core process for handling natural language queries is as follows:
 graph TD
     A[User Enters Query] --> B{Gemini LLM};
     B --> C{Intent Recognition};
-    C --> D{search_candidate};
-    C --> E{find_employee_projects};
-    C --> F{get_employee_allocation};
-    C --> G{get_employee_skills};
-    C --> H{get_employee_phone};
-    C --> I{get_employee_department};
-    C --> J{get_employee_designation};
-    C --> K{get_employee_id};
-    C --> L{get_employee_experience};
-    C --> M{get_employee_email};
-    C --> N{get_employee_doj};
-    C --> O{get_employee_location};
-    C --> P{get_employee_details};
-    C --> Q{allocate_project};
-    C --> R{other};
-
-    D --> S[Execute search_candidate function];
-    E --> T[Execute find_employee_projects function];
-    F --> U[Execute get_employee_allocation function];
-    G --> V[Execute get_employee_skills function];
-    H --> W[Execute get_employee_phone function];
-    I --> X[Execute get_employee_department function];
-    J --> Y[Execute get_employee_designation function];
-    K --> Z[Execute get_employee_id function];
-    L --> AA[Execute get_employee_experience function];
-    M --> AB[Execute get_employee_email function];
-    N --> AC[Execute get_employee_doj function];
-    O --> AD[Execute get_employee_location function];
-    P --> AE[Execute get_employee_details function];
-    Q --> AF[Execute allocate_project function];
-    R --> AG[Show 'Please rephrase' message];
-
-    S --> AH((Display Results));
-    T --> AH;
-    U --> AH;
-    V --> AH;
-    W --> AH;
-    X --> AH;
-    Y --> AH;
-    Z --> AH;
-    AA --> AH;
-    AB --> AH;
-    AC --> AH;
-    AD --> AH;
-    AE --> AH;
-    AF --> AH;
-    AG --> AH;
+    C --> D[Execute Corresponding Function];
+    D --> E((Display Result));
 ```
 
 1.  **User Input:** An admin types a question or command.
