@@ -2,22 +2,26 @@
 
 This Streamlit application provides a comprehensive system for managing employee data and project allocations. Its standout feature is an advanced search bar powered by Google's Gemini LLM, allowing administrators to ask complex, natural language questions about their workforce and project landscape.
 
-## Overview
+## Features
 
-The system has two main functionalities:
-1.  **Data Management:** A UI for creating and viewing employee records and allocating them to projects. All data is stored in local JSON files (`employees_data.json`, `project_allocations.json`).
-2.  **NLP Capabilities:** A powerful, conversational interface that allows admins to interact with the system using natural language. This is achieved through a hybrid approach that leverages the Gemini LLM for language understanding and internal Python code for reliable data retrieval and action execution.
-
----
-
-## The Gemini Hybrid Approach
-
-To provide a flexible and powerful experience, this application uses a hybrid model that combines the strengths of a Large Language Model (LLM) with the reliability of deterministic code.
-
-*   **LLM for Understanding:** We use the Gemini LLM to parse the user's unstructured, natural language query. Its only job is to understand the user's *intent* and extract the key *entities* (like names, skills, or percentages). It then returns this information as a structured JSON object.
-*   **Python for Execution:** The application backend receives this JSON object. Based on the intent, it calls the appropriate internal Python functions to securely fetch, calculate, filter data, or execute actions (like saving allocations) from the local JSON files.
-
-This approach is both powerful and safe. The LLM provides the flexibility to understand almost any phrasing the user might try, while the Python code ensures that the data retrieval and action execution are accurate, predictable, and secure.
+*   **Login System:** Role-based access for "Admin" and "Employee".
+*   **Employee Management:**
+    *   Create new employee records with detailed information.
+    *   Input validation for Employee ID, email, and phone number.
+    *   Dynamic skill selection based on job designation.
+*   **Project Management:**
+    *   Allocate projects to employees individually.
+    *   Bulk project allocation via CSV upload.
+    *   View all project allocations in a clean, tabular format.
+    *   Prevents over-allocation of employees (ensures total allocation is <= 100%).
+*   **NLP-Powered Features (Admin-only):**
+    *   **Natural Language Project Allocation:** Allocate projects using simple sentences.
+    *   **Intent-Based Search:** Ask complex questions about employees, their projects, skills, and availability.
+    *   **Agentic Search:** A powerful, conversational interface that allows admins to interact with the system using natural language to query the project allocations data.
+*   **Dashboard & Analytics (Admin-only):**
+    *   View all employee data.
+    *   Download employee data as a JSON file.
+    *   Sidebar with key metrics: Total Employees, Number of Departments, and Number of Designations.
 
 ---
 
@@ -40,113 +44,165 @@ To run the application, you will need the following:
 
 ---
 
-## Key Features & Enhancements
+## How to Run
 
-### 1. Natural Language Project Allocation (Admin Page)
-
-Admins can now allocate projects to employees using natural language commands directly within the main Admin Dashboard. The system parses the request, validates all parameters (employee, project, dates, allocation percentage, and the 100% allocation rule), and then saves the allocation.
-
-*   **Example Prompt:** "allocate Mehtab to Wellora project from 2025-09-17 to 2025-09-20 with 50% allocation"
-
-### 2. Expanded Advanced Search Capabilities
-
-The dedicated "Advanced Search" page now supports a much wider range of conversational queries.
-
-*   **New Intents:** The system can now answer questions about an employee's:
-    *   **Email**
-    *   **Date of Joining (DOJ)**
-    *   **Years of Experience**
-    *   **Location**
-*   **Improved User Experience:**
-    *   A **loading spinner** (`st.spinner`) is displayed while the query is being processed.
-    *   An **"Show LLM Interpretation" expander** provides transparency by showing the recognized intent and the raw JSON response from the LLM.
-
-### 3. Comprehensive Dependency Management
-
-A `requirements.txt` file has been created, making it easy to set up the development environment and ensure all necessary Python packages are installed.
-
-### 4. Testing Examples
-
-A `QUESTIONS.md` file is available in the project directory, providing a list of example questions for each supported intent to help with testing and demonstration.
+1.  **Install Dependencies:**
+    ```bash
+    pip install -r requirements.txt
+    ```
+2.  **Run the Streamlit App:**
+    ```bash
+    streamlit run app.py
+    ```
 
 ---
 
-## How the NLP Works: A Step-by-Step Flow
+## Detailed Features
 
-The core process for handling natural language queries remains consistent across all NLP-powered features.
+### 1. Login System
 
-### Flow Diagram
+The application features a simple login system with two predefined roles:
+
+*   **Admin:** Has full access to all features, including employee and project management, and the advanced NLP search.
+    *   **Username:** `admin`
+    *   **Password:** `admin`
+*   **Employee:** Has limited access, and can only view and add employee data.
+    *   **Username:** `employee`
+    *   **Password:** `employee`
+
+### 2. Employee Management
+
+*   **Create Employee:** A user-friendly form to add new employees.
+*   **Data Validation:**
+    *   **Employee ID:** Must be in the format `TM` followed by 5 digits (e.g., `TM12345`).
+    *   **Email:** Must be a valid `@gmail.com` address.
+    *   **Phone Number:** Must be exactly 10 digits.
+*   **Dynamic Skills:** The list of available skills dynamically updates based on the selected **Designation**, ensuring relevance.
+
+### 3. Project Management (Admin-only)
+
+*   **Individual Project Allocation:** Admins can assign an employee to a project, specifying the start date, end date, and their allocation percentage. The system prevents allocating an employee beyond 100%.
+*   **Bulk Project Allocation:** For efficiency, admins can upload a CSV file to allocate multiple projects at once. A downloadable template is provided to ensure the correct format.
+*   **View Allocations:** A dedicated section to view all current project allocations.
+
+### 4. NLP Capabilities (Admin-only)
+
+This application uses a hybrid model that combines the strengths of the Gemini LLM for understanding natural language with the reliability of Python for execution.
+
+#### a. Natural Language Project Allocation
+
+Admins can allocate projects using simple, conversational commands.
+
+*   **Example:** `"allocate Mehtab to Wellora project from 2025-09-17 to 2025-09-20 with 50% allocation"`
+
+#### b. Intent-Based Search
+
+The "Intent-Based Search" page allows admins to ask a wide range of questions about their employees.
+
+*   **Candidate Search:**
+    *   `"I need a Backend Developer with Python and Django skills available for 40% allocation."`
+    *   `"Find me a DevOps engineer with AWS and Kubernetes available for 75%."`
+*   **Employee Information:**
+    *   `"What projects is Abhinandan working on?"`
+    *   `"What is the total allocation for Mehtab?"`
+    *   `"What skills does Pokala Neeraj have?"`
+    *   `"What is Abhinandan's phone number?"`
+    *   `"Which department does Abhinandan work in?"`
+    *   `"How much experience does Pokala Neeraj have?"`
+
+#### c. Agentic Search
+
+The "Agentic Search" page provides a powerful, conversational interface that allows admins to interact with the system using natural language to query the `project_allocations.json` data. This feature uses a Pandas DataFrame Agent to translate natural language into Python code and execute it.
+
+*   **Example:** `"what is the total allocation for the wellora?"`
+
+**Warning:** This feature uses an agent that can execute arbitrary code. Use with caution.
+
+---
+
+## How the Intent-Based Recognition Works
+
+The core process for handling natural language queries is as follows:
 
 ```mermaid
 graph TD
-    A[User Enters Query in UI] --> B{App Backend};
-    B --> C{1. Construct Meta-Prompt};
-    C --> D[2. Send to Gemini LLM API];
-    D --> E{3. Receive Structured JSON};
-    E --> F[4. Parse JSON for Intent & Entities];
-    F --> G{5. Execute Internal Python Function};
-    G --> H[(Data Files: employees.json, projects.json)];
-    H --> G;
-    G --> I[6. Format the Result / Execute Action];
-    I --> J[7. Display Answer / Confirmation in UI];
+    A[User Enters Query] --> B{Gemini LLM};
+    B --> C{Intent Recognition};
+    C --> D{search_candidate};
+    C --> E{find_employee_projects};
+    C --> F{get_employee_allocation};
+    C --> G{get_employee_skills};
+    C --> H{get_employee_phone};
+    C --> I{get_employee_department};
+    C --> J{get_employee_designation};
+    C --> K{get_employee_id};
+    C --> L{get_employee_experience};
+    C --> M{get_employee_email};
+    C --> N{get_employee_doj};
+    C --> O{get_employee_location};
+    C --> P{get_employee_details};
+    C --> Q{allocate_project};
+    C --> R{other};
+
+    D --> S[Execute search_candidate function];
+    E --> T[Execute find_employee_projects function];
+    F --> U[Execute get_employee_allocation function];
+    G --> V[Execute get_employee_skills function];
+    H --> W[Execute get_employee_phone function];
+    I --> X[Execute get_employee_department function];
+    J --> Y[Execute get_employee_designation function];
+    K --> Z[Execute get_employee_id function];
+    L --> AA[Execute get_employee_experience function];
+    M --> AB[Execute get_employee_email function];
+    N --> AC[Execute get_employee_doj function];
+    O --> AD[Execute get_employee_location function];
+    P --> AE[Execute get_employee_details function];
+    Q --> AF[Execute allocate_project function];
+    R --> AG[Show "Please rephrase" message];
+
+    S --> AH((Display Results));
+    T --> AH;
+    U --> AH;
+    V --> AH;
+    W --> AH;
+    X --> AH;
+    Y --> AH;
+    Z --> AH;
+    AA --> AH;
+    AB --> AH;
+    AC --> AH;
+    AD --> AH;
+    AE --> AH;
+    AF --> AH;
+    AG --> AH;
 ```
 
-### Detailed Steps
-
-1.  **User Input:** An admin types a question or command into the designated natural language input field.
-
-2.  **Meta-Prompt Construction:** The backend code takes the user's input and wraps it inside a larger "meta-prompt" that precisely instructs the LLM on its task of parsing the query into a structured JSON object.
-
-3.  **Gemini LLM API Call:** The complete meta-prompt is sent to the Gemini API.
-
-4.  **Structured JSON Response:** The LLM processes the prompt and returns a clean JSON object containing the identified `intent` and extracted `entities`.
-
-5.  **Python Execution Engine:** The backend receives this JSON. A robust `if/elif` structure checks the `intent` and executes the corresponding Python logic.
-
-6.  **Data Retrieval & Logic / Action Execution:** The relevant Python function(s) are executed. This might involve:
-    *   Loading data from `employees_data.json` and `project_allocations.json`.
-    *   Performing calculations, filtering, or lookups.
-    *   Executing actions like saving new project allocations after thorough validation.
-
-7.  **Display Results / Confirmation:** The final result (e.g., an answer to a question, a success message for an allocation, or an error message) is formatted and displayed to the user.
+1.  **User Input:** An admin types a question or command.
+2.  **Gemini LLM:** The query is sent to the Gemini LLM.
+3.  **Intent Recognition:** The LLM determines the user's intent and extracts relevant entities.
+4.  **Function Execution:** Based on the recognized intent, the corresponding Python function is executed to fetch data or perform an action.
+5.  **Display Results:** The final result is displayed to the user.
 
 ---
 
-## Examples of Supported Questions
+## How the Agentic Search Works
 
-This system can handle a wide variety of conversational questions and commands:
+The Agentic Search feature uses a different approach to answer questions.
 
-### 1. Candidate Search (`search_candidate`)
-*   "I need a Backend Developer with Python and Django skills available for 40% allocation."
-*   "Show me AI/ML Data Scientists with TensorFlow and PyTorch."
-*   "Find me a DevOps engineer with AWS and Kubernetes available for 75%."
+```mermaid
+graph TD
+    A[User Enters Query] --> B{Pandas DataFrame Agent};
+    B --> C{Gemini LLM};
+    C --> D[Generate Python Code];
+    D --> E{Code Execution};
+    E --> F[(project_allocations.json)];
+    F --> E;
+    E --> G[Get Result];
+    G --> H((Display Result));
+```
 
-### 2. Employee Project Information (`find_employee_projects`)
-*   "What projects is Abhinandan working on?"
-*   "In which projects is Neeraj Pokala involved?"
-
-### 3. Employee Allocation Details (`get_employee_allocation`)
-*   "What is the total allocation for Mehtab?"
-*   "How much is Priya Sharma allocated?"
-
-### 4. Employee Skill Information (`get_employee_skills`)
-*   "What skills does Pokala Neeraj have?"
-*   "Show me Abhinandan's skills."
-
-### 5. Employee Contact Information (`get_employee_phone`, `get_employee_email`)
-*   "What is Abhinandan's phone number?"
-*   "Email for Neeraj Pokala."
-
-### 6. Employee Role & Department (`get_employee_department`, `get_employee_designation`)
-*   "Which department does Abhinandan work in?"
-*   "What is Neeraj Pokala's designation?"
-
-### 7. Employee Identification (`get_employee_id`)
-*   "What is the employee ID of Mehtab?"
-
-### 8. Employee Experience (`get_employee_experience`)
-*   "How much experience does Pokala Neeraj have?"
-
-### 9. Project Allocation Command (`allocate_project`)
-*   "Allocate Mehtab to Wellora project from 2025-09-17 to 2025-09-20 with 50% allocation."
-*   "Assign Abhinandan to Project Alpha, start 2025-10-01 end 2026-03-31, 75%."
+1.  **User Input:** An admin types a question into the Agentic Search page.
+2.  **Pandas DataFrame Agent:** The query is passed to a Pandas DataFrame Agent, which is specifically designed to work with data in a DataFrame.
+3.  **Gemini LLM:** The agent uses the Gemini LLM to understand the user's query and translate it into Python code (using the Pandas library).
+4.  **Code Execution:** The generated Python code is then executed against the `project_allocations.json` data.
+5.  **Display Result:** The final result of the code execution is displayed to the user.

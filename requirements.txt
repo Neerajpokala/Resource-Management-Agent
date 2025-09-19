@@ -2,3 +2,7 @@ streamlit
 pandas
 plotly
 google-generativeai
+tabulate
+langchain-experimental
+langchain
+langchain-google-genai

@@ -6,6 +6,9 @@ import os
 import pandas as pd
 import plotly.express as px
 import google.generativeai as genai
+from langchain_experimental.agents.agent_toolkits.pandas.base import create_pandas_dataframe_agent
+from langchain.agents import AgentExecutor, AgentType
+from langchain_google_genai import ChatGoogleGenerativeAI
 
 # --- Common Functions and Data ---
 
@@ -110,6 +113,41 @@ def get_employee_total_allocation(employee_id):
         if alloc.get('employee_id') == employee_id:
             total += alloc.get('allocation', 0)
     return total
+
+def make_pandas_gemini_agent(
+    json_path: str,
+    gemini_model: str = "gemini-1.5-flash",
+    temperature: float = 0.0,
+    verbose: bool = True
+):
+    # 1. Load your JSON data into a DataFrame
+    df = pd.read_json(json_path)
+    # 2. Setup Gemini LLM
+    llm = ChatGoogleGenerativeAI(
+        model=gemini_model,
+        google_api_key=st.secrets["GEMINI_API_KEY"],
+        temperature=temperature,
+    )
+    # 3. Create pandas agent (no extra kwargs here!)
+    pandas_agent = create_pandas_dataframe_agent(
+        llm=llm,
+        df=df,
+        agent_type=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
+        verbose=verbose,
+        include_df_in_prompt=True,
+        number_of_head_rows=5,
+        allow_dangerous_code=True,  # executes arbitrary code!
+    )
+    # 4. Wrap in AgentExecutor so we can handle parsing errors
+    agent_executor = AgentExecutor.from_agent_and_tools(
+        agent=pandas_agent.agent,
+        tools=pandas_agent.tools,
+        verbose=verbose,
+        handle_parsing_errors=True,  #
+        max_iterations=10,
+        return_intermediate_steps=True,
+    )
+    return agent_executor
 
 # --- Page Functions ---
 
@@ -441,6 +479,8 @@ def admin_page():
                             st.success(f"Successfully allocated **{project_name}** to **{found_employee['name']}** with **{allocation_val}%** allocation.")
                         else:
                             st.error("Failed to save project allocation.")
+                elif intent == "other":
+                    st.error("Sorry, I could not understand your request as an allocation command. Please try phrasing it differently.")
                 else:
                     st.error("Sorry, I could not understand your request as an allocation command. Please try phrasing it differently.")
 
@@ -515,6 +555,14 @@ Here are the possible user intents and the entities you must extract for each:
     *   Triggered when the user wants to allocate an employee to a project. Examples: "allocate X to Project Alpha from YYYY-MM-DD to YYYY-MM-DD with Z% allocation", "assign X to project Beta, start 2025-01-01 end 2025-06-30, 50%"
     *   **Entities to extract:** `employee_name` (string), `project_name` (string), `start_date` (string, YYYY-MM-DD format), `end_date` (string, YYYY-MM-DD format), `allocation` (integer).
 
+14. **Intent: `get_employee_details`**
+    *   Triggered when the user asks for all details of an employee. Examples: "give me the details of X", "information about X", "show me everything for X"
+    *   **Entities to extract:** `employee_name` (string).
+
+15. **Intent: `other`**
+    *   Triggered when the user's query does not match any of the other intents. Examples: "hello", "how are you", "what is the weather today?"
+    *   **Entities to extract:** None.
+
 ---
 **User's Prompt:** "{query}"
 ---
@@ -531,8 +579,8 @@ Here are the possible user intents and the entities you must extract for each:
         st.info("Please ensure your Gemini API key is configured correctly in .streamlit/secrets.toml")
         return None
 
-def advanced_search_page():
-    st.header("Advanced NLP Search")
+def intent_based_search_page():
+    st.header("Intent-Based Search")
     st.info("Ask questions like: 'Find a DevOps engineer with AWS and 50% allocation' or 'What projects is Jane Doe working on?'")
 
     query = st.text_input("Your question:", key="nlp_query")
@@ -558,7 +606,7 @@ def advanced_search_page():
                 "get_employee_allocation", "find_employee_projects", "get_employee_skills",
                 "get_employee_phone", "get_employee_department", "get_employee_designation",
                 "get_employee_id", "get_employee_experience", "get_employee_email",
-                "get_employee_doj", "get_employee_location"
+                "get_employee_doj", "get_employee_location", "get_employee_details"
             ]
 
             if intent in employee_lookup_intents:
@@ -627,6 +675,24 @@ def advanced_search_page():
                     location = found_employee.get('location')
                     st.success(f"**{found_employee['name']}** is located in **{location}**.")
 
+                elif intent == "get_employee_details":
+                    st.success(f"Showing all details for **{found_employee['name']}**:")
+                    
+                    # Display employee details in a tabular format
+                    st.subheader("Employee Information")
+                    employee_df = pd.DataFrame([found_employee])
+                    st.dataframe(employee_df)
+
+                    # Display project allocations
+                    project_allocations = load_project_allocations()
+                    employee_projects = [alloc for alloc in project_allocations if alloc['employee_id'] == found_employee['employee_id']]
+                    
+                    if not employee_projects:
+                        st.info(f"**{found_employee['name']}** is not currently allocated to any projects.")
+                    else:
+                        st.subheader("Project Allocations")
+                        st.dataframe(pd.DataFrame(employee_projects))
+
             elif intent == "search_candidate":
                 designation = entities.get("designation")
                 required_skills = set(entities.get("skills", []))
@@ -675,10 +741,33 @@ def advanced_search_page():
                 st.json(response_json)
 
             # The final else block for unhandled intents
-            if intent not in employee_lookup_intents and intent != "search_candidate":
+            if intent == "other" or (intent not in employee_lookup_intents and intent != "search_candidate"):
                 st.error("Sorry, I could not understand your request. Please try phrasing it differently.")
-                st.info("Here is the raw response from the AI model for debugging:")
-                st.json(response_json)
+                # st.info("Here is the raw response from the AI model for debugging:")
+                # st.json(response_json)
+
+def agentic_search_page():
+    st.header("Agentic Search")
+    st.info("Ask questions about your data. For example: 'what is the total allocation for the wellora?'")
+    st.warning("**Warning:** This feature uses an agent that can execute arbitrary code. Use with caution.")
+
+    query = st.text_input("Your question:", key="agentic_query")
+
+    if st.button("Search", key="agentic_search_button"):
+        if not query:
+            st.warning("Please enter a question.")
+            return
+
+        with st.spinner('Searching and processing...'):
+            try:
+                agent = make_pandas_gemini_agent("project_allocations.json")
+                result = agent.invoke({"input": query})
+                st.write(result.get("output"))
+                with st.expander("Show Agentic Response"):
+                    st.write(result.get("intermediate_steps"))
+            except Exception as e:
+                st.error(f"An error occurred: {e}")
+
 
 # --- Main App Logic ---
 
@@ -693,7 +782,7 @@ def main():
     else:
         if st.session_state.role == "admin":
             st.sidebar.title(f"Welcome, {st.session_state.role}")
-            page = st.sidebar.radio("Go to", ["Employee", "Admin", "Advanced Search"])
+            page = st.sidebar.radio("Go to", ["Employee", "Admin", "Intent-Based Search", "Agentic Search"])
 
             # Display Key Metrics in the sidebar
             sidebar_data = load_existing_data()
@@ -709,8 +798,10 @@ def main():
                 employee_page()
             elif page == "Admin":
                 admin_page()
-            elif page == "Advanced Search":
-                advanced_search_page()
+            elif page == "Intent-Based Search":
+                intent_based_search_page()
+            elif page == "Agentic Search":
+                agentic_search_page()
 
             if st.sidebar.button("Logout"):
                 st.session_state.logged_in = False
@@ -726,7 +817,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-def advanced_search_page():
-    st.header("Advanced NLP Search")
-    st.info("This page is under construction.")
