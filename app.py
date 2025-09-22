@@ -395,7 +395,7 @@ def admin_page():
     with st.container():
         # st.markdown('<div class="form-container">', unsafe_allow_html=True)
         st.markdown("### Allocate Project using Natural Language")
-        st.info("Example: 'allocate Mehtab to Wellora project from 2025-09-17 to 2025-09-20 with 50% allocation'")
+        st.info("Example: 'allocate Abhinandan to Wellora project from 2025-09-17 to 2025-09-20 with 50% allocation'")
 
         nl_allocation_query = st.text_input("Enter your allocation request:", key="nl_allocation_query")
 
