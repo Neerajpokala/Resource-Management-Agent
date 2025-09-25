@@ -14,7 +14,7 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 
 # Page configuration
 st.set_page_config(
-    page_title="Employee Data Entry System",
+    page_title="Talent IQ",
     page_icon="👥",
     layout="wide",
     initial_sidebar_state="auto"

@@ -66,3 +66,8 @@ This document provides example questions for each intent supported by the Advanc
 *   "Where is Pokala Neeraj located?"
 *   "Location of Abhinandan."
 *   "Mehtab's work location."
+
+### 12. `Agentic Search`
+* Give all employees Names who work in the ‘AI & Gen AI Solutions’ department, are located in Hyderabad, have more than 2 years of experience, and are allocated to a project with 100% allocation
+* Give the employees names who have skills related to ‘MLflow’ or ‘Scikit-learn’, joined before September 2025, and have an allocation Less than 25
+ 
